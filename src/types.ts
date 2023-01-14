@@ -605,8 +605,8 @@ export function toTypeName(ctx: Context, messageDesc: DescriptorProto, field: Fi
   if (isRepeated(field)) {
     const mapType = detectMapType(ctx, messageDesc, field);
     if (mapType) {
-      const { keyType, valueType } = mapType;
-      if (ctx.options.useMapType) {
+      const { keyField, keyType, valueType } = mapType;
+      if (ctx.options.useMapType || (ctx.options.forceLong === LongOption.LONG && isLong(keyField))) {
         return code`Map<${keyType}, ${valueType}>`;
       }
       return code`{ [key: ${keyType} ]: ${valueType} }`;

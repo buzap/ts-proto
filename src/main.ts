@@ -1945,7 +1945,7 @@ function maybeCastToNumber(
   variableName: string
 ): string {
   const { keyType } = detectMapType(ctx, messageDesc, field)!;
-  if (keyType.toCodeString() === "string") {
+  if (keyType.toCodeString() === "string" || keyType.toCodeString() === "Long") {
     return variableName;
   } else {
     return `Number(${variableName})`;

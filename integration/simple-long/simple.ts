@@ -15,10 +15,11 @@ export interface SimpleWithWrappers {
 }
 
 export interface SimpleWithMap {
-  nameLookup: { [key: string]: string };
-  intLookup: { [key: number]: number };
+  nameLookup: Map<string, string>;
+  intLookup: Map<number, number>;
   /** Ideally we'd test map<int64, int64> but we present maps as JS objects and `Long` cannot be used as a keys. */
-  longLookup: { [key: string]: Long };
+  longLookup: Map<string, Long>;
+  longLookup2: Map<Long, Long>;
 }
 
 export interface SimpleWithMap_NameLookupEntry {
@@ -33,6 +34,11 @@ export interface SimpleWithMap_IntLookupEntry {
 
 export interface SimpleWithMap_LongLookupEntry {
   key: string;
+  value: Long;
+}
+
+export interface SimpleWithMap_LongLookup2Entry {
+  key: Long;
   value: Long;
 }
 
@@ -162,19 +168,22 @@ export const SimpleWithWrappers = {
 };
 
 function createBaseSimpleWithMap(): SimpleWithMap {
-  return { nameLookup: {}, intLookup: {}, longLookup: {} };
+  return { nameLookup: new Map(), intLookup: new Map(), longLookup: new Map(), longLookup2: new Map() };
 }
 
 export const SimpleWithMap = {
   encode(message: SimpleWithMap, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    Object.entries(message.nameLookup).forEach(([key, value]) => {
+    message.nameLookup.forEach((value, key) => {
       SimpleWithMap_NameLookupEntry.encode({ key: key as any, value }, writer.uint32(18).fork()).ldelim();
     });
-    Object.entries(message.intLookup).forEach(([key, value]) => {
+    message.intLookup.forEach((value, key) => {
       SimpleWithMap_IntLookupEntry.encode({ key: key as any, value }, writer.uint32(26).fork()).ldelim();
     });
-    Object.entries(message.longLookup).forEach(([key, value]) => {
+    message.longLookup.forEach((value, key) => {
       SimpleWithMap_LongLookupEntry.encode({ key: key as any, value }, writer.uint32(34).fork()).ldelim();
+    });
+    message.longLookup2.forEach((value, key) => {
+      SimpleWithMap_LongLookup2Entry.encode({ key: key as any, value }, writer.uint32(42).fork()).ldelim();
     });
     return writer;
   },
@@ -189,19 +198,25 @@ export const SimpleWithMap = {
         case 2:
           const entry2 = SimpleWithMap_NameLookupEntry.decode(reader, reader.uint32());
           if (entry2.value !== undefined) {
-            message.nameLookup[entry2.key] = entry2.value;
+            message.nameLookup.set(entry2.key, entry2.value);
           }
           break;
         case 3:
           const entry3 = SimpleWithMap_IntLookupEntry.decode(reader, reader.uint32());
           if (entry3.value !== undefined) {
-            message.intLookup[entry3.key] = entry3.value;
+            message.intLookup.set(entry3.key, entry3.value);
           }
           break;
         case 4:
           const entry4 = SimpleWithMap_LongLookupEntry.decode(reader, reader.uint32());
           if (entry4.value !== undefined) {
-            message.longLookup[entry4.key] = entry4.value;
+            message.longLookup.set(entry4.key, entry4.value);
+          }
+          break;
+        case 5:
+          const entry5 = SimpleWithMap_LongLookup2Entry.decode(reader, reader.uint32());
+          if (entry5.value !== undefined) {
+            message.longLookup2.set(entry5.key, entry5.value);
           }
           break;
         default:
@@ -215,23 +230,29 @@ export const SimpleWithMap = {
   fromJSON(object: any): SimpleWithMap {
     return {
       nameLookup: isObject(object.nameLookup)
-        ? Object.entries(object.nameLookup).reduce<{ [key: string]: string }>((acc, [key, value]) => {
-          acc[key] = String(value);
+        ? Object.entries(object.nameLookup).reduce<Map<string, string>>((acc, [key, value]) => {
+          acc.set(key, String(value));
           return acc;
-        }, {})
-        : {},
+        }, new Map())
+        : new Map(),
       intLookup: isObject(object.intLookup)
-        ? Object.entries(object.intLookup).reduce<{ [key: number]: number }>((acc, [key, value]) => {
-          acc[Number(key)] = Number(value);
+        ? Object.entries(object.intLookup).reduce<Map<number, number>>((acc, [key, value]) => {
+          acc.set(Number(key), Number(value));
           return acc;
-        }, {})
-        : {},
+        }, new Map())
+        : new Map(),
       longLookup: isObject(object.longLookup)
-        ? Object.entries(object.longLookup).reduce<{ [key: string]: Long }>((acc, [key, value]) => {
-          acc[key] = Long.fromValue(value as Long | string);
+        ? Object.entries(object.longLookup).reduce<Map<string, Long>>((acc, [key, value]) => {
+          acc.set(key, Long.fromValue(value as Long | string));
           return acc;
-        }, {})
-        : {},
+        }, new Map())
+        : new Map(),
+      longLookup2: isObject(object.longLookup2)
+        ? Object.entries(object.longLookup2).reduce<Map<Long, Long>>((acc, [key, value]) => {
+          acc.set(key, Long.fromValue(value as Long | string));
+          return acc;
+        }, new Map())
+        : new Map(),
     };
   },
 
@@ -239,20 +260,26 @@ export const SimpleWithMap = {
     const obj: any = {};
     obj.nameLookup = {};
     if (message.nameLookup) {
-      Object.entries(message.nameLookup).forEach(([k, v]) => {
+      message.nameLookup.forEach((v, k) => {
         obj.nameLookup[k] = v;
       });
     }
     obj.intLookup = {};
     if (message.intLookup) {
-      Object.entries(message.intLookup).forEach(([k, v]) => {
+      message.intLookup.forEach((v, k) => {
         obj.intLookup[k] = Math.round(v);
       });
     }
     obj.longLookup = {};
     if (message.longLookup) {
-      Object.entries(message.longLookup).forEach(([k, v]) => {
+      message.longLookup.forEach((v, k) => {
         obj.longLookup[k] = v.toString();
+      });
+    }
+    obj.longLookup2 = {};
+    if (message.longLookup2) {
+      message.longLookup2.forEach((v, k) => {
+        obj.longLookup2[k] = v.toString();
       });
     }
     return obj;
@@ -264,33 +291,42 @@ export const SimpleWithMap = {
 
   fromPartial<I extends Exact<DeepPartial<SimpleWithMap>, I>>(object: I): SimpleWithMap {
     const message = createBaseSimpleWithMap();
-    message.nameLookup = Object.entries(object.nameLookup ?? {}).reduce<{ [key: string]: string }>(
-      (acc, [key, value]) => {
+    message.nameLookup = (() => {
+      const m = new Map();
+      (object.nameLookup as Map<string, string> ?? new Map()).forEach((value, key) => {
         if (value !== undefined) {
-          acc[key] = String(value);
+          m.set(key, String(value));
         }
-        return acc;
-      },
-      {},
-    );
-    message.intLookup = Object.entries(object.intLookup ?? {}).reduce<{ [key: number]: number }>(
-      (acc, [key, value]) => {
+      });
+      return m;
+    })();
+    message.intLookup = (() => {
+      const m = new Map();
+      (object.intLookup as Map<number, number> ?? new Map()).forEach((value, key) => {
         if (value !== undefined) {
-          acc[Number(key)] = Number(value);
+          m.set(Number(key), Number(value));
         }
-        return acc;
-      },
-      {},
-    );
-    message.longLookup = Object.entries(object.longLookup ?? {}).reduce<{ [key: string]: Long }>(
-      (acc, [key, value]) => {
+      });
+      return m;
+    })();
+    message.longLookup = (() => {
+      const m = new Map();
+      (object.longLookup as Map<string, Long> ?? new Map()).forEach((value, key) => {
         if (value !== undefined) {
-          acc[key] = Long.fromValue(value);
+          m.set(key, Long.fromValue(value));
         }
-        return acc;
-      },
-      {},
-    );
+      });
+      return m;
+    })();
+    message.longLookup2 = (() => {
+      const m = new Map();
+      (object.longLookup2 as Map<Long, Long> ?? new Map()).forEach((value, key) => {
+        if (value !== undefined) {
+          m.set(key, Long.fromValue(value));
+        }
+      });
+      return m;
+    })();
     return message;
   },
 };
@@ -474,6 +510,70 @@ export const SimpleWithMap_LongLookupEntry = {
   ): SimpleWithMap_LongLookupEntry {
     const message = createBaseSimpleWithMap_LongLookupEntry();
     message.key = object.key ?? "";
+    message.value = (object.value !== undefined && object.value !== null) ? Long.fromValue(object.value) : Long.ZERO;
+    return message;
+  },
+};
+
+function createBaseSimpleWithMap_LongLookup2Entry(): SimpleWithMap_LongLookup2Entry {
+  return { key: Long.ZERO, value: Long.ZERO };
+}
+
+export const SimpleWithMap_LongLookup2Entry = {
+  encode(message: SimpleWithMap_LongLookup2Entry, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (!message.key.isZero()) {
+      writer.uint32(8).int64(message.key);
+    }
+    if (!message.value.isZero()) {
+      writer.uint32(16).int64(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SimpleWithMap_LongLookup2Entry {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSimpleWithMap_LongLookup2Entry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.key = reader.int64() as Long;
+          break;
+        case 2:
+          message.value = reader.int64() as Long;
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SimpleWithMap_LongLookup2Entry {
+    return {
+      key: isSet(object.key) ? Long.fromValue(object.key) : Long.ZERO,
+      value: isSet(object.value) ? Long.fromValue(object.value) : Long.ZERO,
+    };
+  },
+
+  toJSON(message: SimpleWithMap_LongLookup2Entry): unknown {
+    const obj: any = {};
+    message.key !== undefined && (obj.key = (message.key || Long.ZERO).toString());
+    message.value !== undefined && (obj.value = (message.value || Long.ZERO).toString());
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SimpleWithMap_LongLookup2Entry>, I>>(base?: I): SimpleWithMap_LongLookup2Entry {
+    return SimpleWithMap_LongLookup2Entry.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SimpleWithMap_LongLookup2Entry>, I>>(
+    object: I,
+  ): SimpleWithMap_LongLookup2Entry {
+    const message = createBaseSimpleWithMap_LongLookup2Entry();
+    message.key = (object.key !== undefined && object.key !== null) ? Long.fromValue(object.key) : Long.ZERO;
     message.value = (object.value !== undefined && object.value !== null) ? Long.fromValue(object.value) : Long.ZERO;
     return message;
   },

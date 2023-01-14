@@ -1,1 +1,1 @@
-forceLong=long
+forceLong=long,useMapType=true
