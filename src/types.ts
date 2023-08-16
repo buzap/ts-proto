@@ -72,7 +72,7 @@ export function basicLongWireType(type: FieldDescriptorProto_Type): number | und
 export function basicTypeName(
   ctx: Context,
   field: FieldDescriptorProto,
-  typeOptions: { keepValueType?: boolean } = {},
+  typeOptions: { keepValueType?: boolean; isMapKey?: boolean } = {},
 ): Code {
   const { options } = ctx;
   switch (field.type) {
@@ -90,7 +90,7 @@ export function basicTypeName(
     case FieldDescriptorProto_Type.TYPE_FIXED64:
     case FieldDescriptorProto_Type.TYPE_SFIXED64:
       // this handles 2^53, Long is only needed for 2^64; this is effectively pbjs's forceNumber
-      return longTypeName(ctx);
+      return longTypeName(ctx, !!typeOptions.isMapKey);
     case FieldDescriptorProto_Type.TYPE_BOOL:
       return code`boolean`;
     case FieldDescriptorProto_Type.TYPE_STRING:
@@ -490,8 +490,8 @@ export function valueTypeName(ctx: Context, typeName: string): Code | undefined 
       return code`number`;
     case ".google.protobuf.Int64Value":
     case ".google.protobuf.UInt64Value":
-      // return options ? longTypeName(options) : code`number`;
-      return longTypeName(ctx);
+      // Only scalar types can be the key of a protobuf map. Therefore, this value type must not be a map key.
+      return longTypeName(ctx, false);
     case ".google.protobuf.BoolValue":
       return code`boolean`;
     case ".google.protobuf.BytesValue":
@@ -541,9 +541,12 @@ export function wrapperTypeName(typeName: string): string | undefined {
   }
 }
 
-function longTypeName(ctx: Context): Code {
+function longTypeName(ctx: Context, isMapKey: boolean): Code {
   const { options, utils } = ctx;
   if (options.forceLong === LongOption.LONG) {
+    if (isMapKey && !ctx.options.useMapType) {
+      return code`string`;
+    }
     return code`${utils.Long}`;
   } else if (options.forceLong === LongOption.STRING) {
     return code`string`;
@@ -681,7 +684,7 @@ export function detectMapType(
     const mapType = typeMap.get(fieldDesc.typeName)![2] as DescriptorProto;
     if (!mapType.options?.mapEntry) return undefined;
     const [keyField, valueField] = mapType.field;
-    const keyType = toTypeName(ctx, messageDesc, keyField);
+    const keyType = basicTypeName(ctx, keyField, { isMapKey: true });
     // use basicTypeName because we don't need the '| undefined'
     const valueType = basicTypeName(ctx, valueField);
     return { messageDesc: mapType, keyField, keyType, valueField, valueType };

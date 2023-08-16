@@ -32,7 +32,7 @@ export interface SimpleWithMap_IntLookupEntry {
 }
 
 export interface SimpleWithMap_LongLookupEntry {
-  key: string;
+  key: Long;
   value: Long;
 }
 
@@ -241,7 +241,7 @@ export const SimpleWithMap = {
 
           const entry4 = SimpleWithMap_LongLookupEntry.decode(reader, reader.uint32());
           if (entry4.value !== undefined) {
-            message.longLookup[entry4.key] = entry4.value;
+            message.longLookup[entry4.key.toString()] = entry4.value;
           }
           continue;
       }
@@ -489,13 +489,13 @@ export const SimpleWithMap_IntLookupEntry = {
 };
 
 function createBaseSimpleWithMap_LongLookupEntry(): SimpleWithMap_LongLookupEntry {
-  return { key: "", value: Long.ZERO };
+  return { key: Long.ZERO, value: Long.ZERO };
 }
 
 export const SimpleWithMap_LongLookupEntry = {
   encode(message: SimpleWithMap_LongLookupEntry, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.key !== "") {
-      writer.uint32(10).string(message.key);
+    if (!message.key.isZero()) {
+      writer.uint32(8).int64(message.key);
     }
     if (!message.value.isZero()) {
       writer.uint32(16).int64(message.value);
@@ -511,11 +511,11 @@ export const SimpleWithMap_LongLookupEntry = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          if (tag !== 10) {
+          if (tag !== 8) {
             break;
           }
 
-          message.key = reader.string();
+          message.key = reader.int64() as Long;
           continue;
         case 2:
           if (tag !== 16) {
@@ -535,15 +535,15 @@ export const SimpleWithMap_LongLookupEntry = {
 
   fromJSON(object: any): SimpleWithMap_LongLookupEntry {
     return {
-      key: isSet(object.key) ? String(object.key) : "",
+      key: isSet(object.key) ? Long.fromValue(object.key) : Long.ZERO,
       value: isSet(object.value) ? Long.fromValue(object.value) : Long.ZERO,
     };
   },
 
   toJSON(message: SimpleWithMap_LongLookupEntry): unknown {
     const obj: any = {};
-    if (message.key !== "") {
-      obj.key = message.key;
+    if (!message.key.isZero()) {
+      obj.key = (message.key || Long.ZERO).toString();
     }
     if (!message.value.isZero()) {
       obj.value = (message.value || Long.ZERO).toString();
@@ -558,7 +558,7 @@ export const SimpleWithMap_LongLookupEntry = {
     object: I,
   ): SimpleWithMap_LongLookupEntry {
     const message = createBaseSimpleWithMap_LongLookupEntry();
-    message.key = object.key ?? "";
+    message.key = (object.key !== undefined && object.key !== null) ? Long.fromValue(object.key) : Long.ZERO;
     message.value = (object.value !== undefined && object.value !== null) ? Long.fromValue(object.value) : Long.ZERO;
     return message;
   },

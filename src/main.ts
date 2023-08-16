@@ -1101,13 +1101,21 @@ function generateDecode(ctx: Context, fullName: string, messageDesc: DescriptorP
     if (isRepeated(field)) {
       const maybeNonNullAssertion = ctx.options.useOptionals === "all" ? "!" : "";
 
-      if (isMapType(ctx, messageDesc, field)) {
+      const mapType = detectMapType(ctx, messageDesc, field);
+      if (mapType) {
         // We need a unique const within the `cast` statement
         const varName = `entry${field.number}`;
 
-        const valueSetterSnippet = ctx.options.useMapType
-          ? `message.${fieldName}${maybeNonNullAssertion}.set(${varName}.key, ${varName}.value)`
-          : `message.${fieldName}${maybeNonNullAssertion}[${varName}.key] = ${varName}.value`;
+        let valueSetterSnippet: string;
+        if (ctx.options.useMapType) {
+          valueSetterSnippet = `message.${fieldName}${maybeNonNullAssertion}.set(${varName}.key, ${varName}.value)`;
+        } else {
+          let key = `${varName}.key`;
+          if (isLong(mapType.keyField) && ctx.options.forceLong === LongOption.LONG) {
+            key = `${varName}.key.toString()`;
+          }
+          valueSetterSnippet = `message.${fieldName}${maybeNonNullAssertion}[${key}] = ${varName}.value`;
+        }
         const initializerSnippet = initializerNecessary
           ? `
             if (message.${fieldName} === undefined) {
